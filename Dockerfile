@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y git curl
 
 # Clone the Cask repository
-RUN git clone https://github.com/lumaaaaaa/cask.git
+RUN git clone https://github.com/bugbounted/cask.git
 
 # Install Cask
 WORKDIR /app/cask
