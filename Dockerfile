@@ -1,41 +1,41 @@
-# Use the official Go image as the base image
+# Stage 1: Build the Go application
 FROM golang:1.20 AS builder
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Copy the go mod and sum files
+# Copy go.mod and go.sum files
 COPY go.mod go.sum ./
 
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+# Download all dependencies. Dependencies will be cached if go.mod and go.sum files are not changed
 RUN go mod download
 
 # Copy the source code into the container
 COPY . .
 
-# Build the Go app
+# Build the Go application
 RUN go build -o web
 
-# Start a new stage from scratch
+# Stage 2: Create the final image with Cask installed
 FROM debian:bullseye-slim
 
-# Install the Cask package
+# Install Cask
 RUN apt-get update && apt-get install -y \
     git \
-    && git clone https://github.com/lumaaaaaa/cask \
+    && git clone https://github.com/bugbounted/cask \
     && cd cask \
     && go install \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the Current Working Directory inside the container
+# Set the Working Directory inside the container
 WORKDIR /app
 
-# Copy the binary and any required files from the builder stage
+# Copy the Go application from the builder stage
 COPY --from=builder /app/web .
 
-# Expose port 8080 to the outside world
+# Expose port 8080
 EXPOSE 8080
 
-# Run the web service
+# Run the Go application
 CMD ["./web"]
