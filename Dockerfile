@@ -1,41 +1,22 @@
-# Use an official Go runtime as a parent image
-FROM golang:1.23 AS builder
+# Use the official Golang image as a base image
+FROM golang:1.23
 
-# Set the Current Working Directory inside the container
+# Set the working directory in the container
 WORKDIR /app
 
-# Install git and necessary tools
-RUN apt-get update && apt-get install -y git curl
+# Install the Cask package
+RUN git clone https://github.com/lumaaaaaa/cask && \
+    cd cask && \
+    go install
 
-# Clone the Cask repository
-RUN git clone https://github.com/bugbounted/cask.git
-
-# Install Cask
-WORKDIR /app/cask
-RUN go install
-
-# Check if Cask was installed
-RUN which cask
-
-# Copy the Go source code into the container
-WORKDIR /app
+# Copy the web.go file to the working directory
 COPY web.go .
 
-# Build the Go application
-RUN go build -o webservice web.go
+# Build the web service
+RUN go build -o web-service .
 
-# Start a new stage from scratch
-FROM debian:bullseye-slim
-
-# Install necessary packages
-RUN apt-get update && apt-get install -y ca-certificates
-
-# Copy the Go binary and Cask binary from the builder stage
-COPY --from=builder /app/webservice /usr/local/bin/webservice
-COPY --from=builder /go/bin/cask /usr/local/bin/cask
-
-# Expose port 8080
+# Expose the port on which the web service will run
 EXPOSE 8080
 
-# Run the Go application
-ENTRYPOINT ["/usr/local/bin/webservice"]
+# Run the web service
+CMD ["./web-service"]
