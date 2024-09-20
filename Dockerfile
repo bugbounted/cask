@@ -1,49 +1,29 @@
-# Stage 1: Build the Go application
+# Use an official Go runtime as a parent image
 FROM golang:1.20 AS builder
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum files
-COPY go.mod go.sum ./
-
-# Download all dependencies
-RUN go mod download
-
-# Copy the source code into the container
-COPY . .
-
-# Build the Go application
-RUN go build -o web
-
-# Stage 2: Create the final image with Cask installed
-FROM debian:bullseye-slim
-
-# Install dependencies and Go
-RUN apt-get update && apt-get install -y \
-    git \
-    wget \
-    && wget https://dl.google.com/go/go1.20.7.linux-amd64.tar.gz \
-    && tar -C /usr/local -xzf go1.20.7.linux-amd64.tar.gz \
-    && rm go1.20.7.linux-amd64.tar.gz \
-    && echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile \
-    && /bin/bash -c "source /etc/profile"
+# Copy the Go source code into the container
+COPY web.go .
 
 # Install Cask
-RUN git clone https://github.com/bugbounted/cask \
-    && cd cask \
-    && go install \
-    && cd .. \
-    && rm -rf cask
+RUN git clone https://github.com/bugbounted/cask && \
+    cd cask && \
+    go install
 
-# Set the Working Directory inside the container
-WORKDIR /app
+# Build the Go application
+RUN go build -o webservice web.go
 
-# Copy the Go application from the builder stage
-COPY --from=builder /app/web .
+# Start a new stage from scratch
+FROM debian:bullseye-slim
+
+# Copy the Go binary and Cask binary from the builder stage
+COPY --from=builder /app/webservice /usr/local/bin/webservice
+COPY --from=builder /go/bin/cask /usr/local/bin/cask
 
 # Expose port 8080
 EXPOSE 8080
 
 # Run the Go application
-CMD ["./web"]
+ENTRYPOINT ["/usr/local/bin/webservice"]
