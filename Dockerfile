@@ -5,7 +5,7 @@ FROM golang:1.23
 WORKDIR /app
 
 # Install the Cask package
-RUN git clone https://github.com/lumaaaaaa/cask && \
+RUN git clone https://github.com/bugbounted/cask && \
     cd cask && \
     go install
 
