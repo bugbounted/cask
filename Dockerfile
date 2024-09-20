@@ -4,15 +4,21 @@ FROM golang:1.20 AS builder
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Install git and curl
+# Install git and necessary tools
 RUN apt-get update && apt-get install -y git curl
 
-# Clone the Cask repository and install it
-RUN git clone https://github.com/bugbounted/cask.git && \
-    cd cask && \
-    go install
+# Clone the Cask repository
+RUN git clone https://github.com/lumaaaaaa/cask.git
+
+# Install Cask
+WORKDIR /app/cask
+RUN go install
+
+# Check if Cask was installed
+RUN which cask
 
 # Copy the Go source code into the container
+WORKDIR /app
 COPY web.go .
 
 # Build the Go application
@@ -22,8 +28,7 @@ RUN go build -o webservice web.go
 FROM debian:bullseye-slim
 
 # Install necessary packages
-RUN apt-get update && \
-    apt-get install -y ca-certificates
+RUN apt-get update && apt-get install -y ca-certificates
 
 # Copy the Go binary and Cask binary from the builder stage
 COPY --from=builder /app/webservice /usr/local/bin/webservice
