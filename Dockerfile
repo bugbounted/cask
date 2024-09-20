@@ -4,6 +4,9 @@ FROM golang:1.20 AS builder
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
+# Install git and curl
+RUN apt-get update && apt-get install -y git curl
+
 # Clone the Cask repository and install it
 RUN git clone https://github.com/bugbounted/cask.git && \
     cd cask && \
